@@ -1,0 +1,14 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Spring Boot-RollerspeedApplication<rollerspeed>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.rollerspeed.rollerspeed.RollerspeedApplication",
+            "projectName": "rollerspeed",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        }
+    ]
+}
