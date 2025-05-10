@@ -12,6 +12,32 @@ public class IndexController {
     public String index() {
         return "index";
     }
+    @GetMapping("servicios") 
+    public String Servicios() {
+        return "servicios"; 
+    }
+
+   
+    @GetMapping("eventos") 
+    public String Eventos() {
+        return "eventos"; 
+    }
+
     
+    @GetMapping("mision") 
+    public String Mision() {
+        return "mision";
+    }
+   
+    @GetMapping("vision")
+    public String Vision() {
+        return "vision";
+    }
+   
+    @GetMapping("valores") 
+    public String Valores() {
+        return "valores";
+    }
+
     
 }
