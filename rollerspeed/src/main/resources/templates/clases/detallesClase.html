@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalles de la Clase</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <h2 class="mb-4">Detalles de la Clase</h2>
+
+        <div th:if="${error}" class="alert alert-danger" role="alert" th:text="${error}"></div>
+
+        <div th:if="${clase}">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0" th:text="${clase.nombre}">Nombre de la Clase</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>ID:</strong> <span th:text="${clase.id}"></span></p>
+                    <p><strong>Descripción:</strong> <span th:text="${clase.descripcion}"></span></p>
+                    <p><strong>Fecha y Hora de Inicio:</strong> <span th:text="${#temporals.format(clase.fechaInicio, 'dd-MM-yyyy HH:mm')}"></span></p>
+                    <p><strong>Fecha y Hora de Fin:</strong> <span th:text="${#temporals.format(clase.fechaFin, 'dd-MM-yyyy HH:mm')}"></span></p>
+
+                    <h6 class="mt-4">Profesor:</h6>
+                    <p th:if="${clase.profesor}">
+                        <span th:text="${clase.profesor.nombre + ' ' + clase.profesor.apellido}"></span>
+                        (<span th:text="${clase.profesor.email}"></span>)
+                    </p>
+                    <p th:unless="${clase.profesor}">
+                        Sin profesor asignado
+                    </p>
+
+                    <h6 class="mt-4">Alumnos Inscritos:</h6>
+                    <div th:if="${!clase.alumnos.empty}">
+                        <ul class="list-group">
+                            <li class="list-group-item" th:each="alumno : ${clase.alumnos}" th:text="${alumno.nombre + ' ' + alumno.apellido + ' (' + alumno.email + ')'}"></li>
+                        </ul>
+                    </div>
+                    <div th:unless="${!clase.alumnos.empty}">
+                        <p>No hay alumnos inscritos en esta clase.</p>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <a th:href="@{/clases/calendarioSimple}" class="btn btn-secondary me-2">Volver al Calendario</a>
+                    <a th:href="@{/clases/listar}" class="btn btn-info me-2">Ver Todas las Clases</a>
+
+                    <form th:action="@{/clases/eliminar/{id}(id=${clase.id})}" method="post" style="display:inline;">
+                        <button type="submit" class="btn btn-danger"
+                                onclick="return confirm('¿Estás seguro de que quieres eliminar la clase ' +  '[[${clase.nombre}]]' + '?');">
+                            Eliminar Clase
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div th:unless="${clase}">
+            <p>La clase solicitada no fue encontrada.</p>
+            <a th:href="@{/clases/calendarioSimple}" class="btn btn-primary">Volver al Calendario</a>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

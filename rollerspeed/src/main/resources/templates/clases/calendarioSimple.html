@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendario Simple de Clases</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <h2 class="mb-4">Clases Programadas</h2>
+
+        <div th:if="${mensaje}" class="alert alert-success" role="alert" th:text="${mensaje}"></div>
+        <div th:if="${error}" class="alert alert-danger" role="alert" th:text="${error}"></div>
+
+        <form th:action="@{/clases/calendarioSimple}" method="get" class="mb-4">
+            <div class="row g-3 align-items-center">
+                <div class="col-auto">
+                    <label for="fechaInput" class="col-form-label">Seleccionar Fecha:</label>
+                </div>
+                <div class="col-auto">
+                    <input type="date" id="fechaInput" name="fecha" th:value="${fechaSeleccionada}" class="form-control">
+                </div>
+                
+            </div>
+            <div th:if="${errorFecha}" class="alert alert-warning mt-2" role="alert" th:text="${errorFecha}"></div>
+        </form>
+
+        <h3 class="mb-3">Clases para el <span th:text="${#temporals.format(fechaSeleccionada, 'dd-MM-yyyy')}"></span></h3>
+
+        <div th:if="${#lists.isEmpty(clases)}" class="alert alert-info">
+            No hay clases programadas para esta fecha.
+        </div>
+
+        <div th:each="clase : ${clases}" class="card mb-3">
+            <div class="card-body">
+                <h5 class="card-title" th:text="${clase.nombre}">Nombre de la Clase</h5>
+                <h6 class="card-subtitle mb-2 text-muted" th:text="${'Profesor: ' + clase.profesor.nombre + ' ' + clase.profesor.apellido}"></h6>
+                <p class="card-text">
+                    **Inicio:** <span th:text="${#temporals.format(clase.fechaInicio, 'dd-MM-yyyy HH:mm')}"></span><br/>
+                    **Fin:** <span th:text="${#temporals.format(clase.fechaFin, 'dd-MM-yyyy HH:mm')}"></span><br/>
+                    **Descripción:** <span th:text="${clase.descripcion}"></span>
+                </p>
+                <a th:href="@{/clases/detalles/{id}(id=${clase.id})}" class="btn btn-info btn-sm">Ver Detalles</a>
+                </div>
+        </div>
+
+        <a th:href="@{/}" class="btn btn-secondary mt-3">Volver a la Página Principal</a>
+        <a th:href="@{/clases/nueva}" class="btn btn-success mt-3">Crear Nueva Clase</a>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
