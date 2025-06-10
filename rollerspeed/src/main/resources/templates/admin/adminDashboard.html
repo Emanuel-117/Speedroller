@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Administrador</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        body { padding-top: 20px; background-color: #f8f9fa; }
+        .container { background-color: #ffffff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin-bottom: 30px;}
+        h1 { color: #007bff; margin-bottom: 25px; }
+        .card-dashboard { height: 180px; display: flex; flex-direction: column; justify-content: space-between; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); transition: transform 0.2s; }
+        .card-dashboard:hover { transform: translateY(-5px); }
+        .card-dashboard .card-header { background-color: transparent; border-bottom: none; padding-bottom: 0; color: white; font-weight: bold; }
+        .card-dashboard .card-body { color: white; padding-top: 5px; }
+        .bg-primary-dark { background-color: #0056b3; }
+        .bg-success-dark { background-color: #198754; }
+        .bg-warning-dark { background-color: #ffc107; color: black; }
+        .bg-info-dark { background-color: #0dcaf0; color: black; }
+        .logout-link { position: absolute; top: 20px; right: 20px; }
+    </style>
+</head>
+<body>
+    <div class="logout-link">
+        <span class="me-3">Bienvenido, <strong th:text="${session.userRol}"></strong>!</span>
+        <a th:href="@{/logout}" class="btn btn-danger btn-sm">Cerrar Sesión</a>
+    </div>
+
+    <div class="container">
+        <h1>Dashboard de Administración</h1>
+        <p class="lead">Bienvenido, administrador. Desde aquí puedes gestionar el sistema completo.</p>
+
+        <div th:if="${mensaje}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <span th:text="${mensaje}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <span th:text="${error}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-md-4 mb-4">
+                <div class="card card-dashboard bg-primary-dark">
+                    <div class="card-header">
+                        <i class="bi bi-people-fill me-2"></i> Gestión de Usuarios
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title">Usuarios Registrados</h5>
+                        <p class="card-text">Total: [[${totalUsuarios}]]</p>
+                        <a th:href="@{/users/listar}" class="stretched-link"></a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card card-dashboard bg-success-dark">
+                    <div class="card-header">
+                        <i class="bi bi-calendar-event-fill me-2"></i> Gestión de Clases
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title">Clases Activas</h5>
+                        <p class="card-text">Total: [[${totalClases}]]</p>
+                        <a th:href="@{/clases/listarClases}" class="stretched-link"></a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card card-dashboard bg-warning-dark">
+                    <div class="card-header">
+                        <i class="bi bi-wallet-fill me-2"></i> Gestión de Pagos
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title">Pagos Pendientes</h5>
+                        <p class="card-text">[[${pagosPendientes}]]</p>
+                        <a th:href="@{/pagos/listar}" class="stretched-link"></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h3 class="mt-5">Acciones Rápidas</h3>
+        <div class="list-group">
+            <a th:href="@{/users/nuevo}" class="list-group-item list-group-item-action">
+                <i class="bi bi-person-plus-fill me-2"></i> Registrar Nuevo Usuario
+            </a>
+            <a th:href="@{/clases/nueva}" class="list-group-item list-group-item-action">
+                <i class="bi bi-bookmark-plus-fill me-2"></i> Crear Nueva Clase
+            </a>
+            <a th:href="@{/clases/listaClases}" class="list-group-item list-group-item-action">
+                <i class="bi bi-check-square-fill me-2"></i> Tomar Asistencia para una Clase
+            </a>
+            <a th:href="@{/reportes/asistencia/alumno}" class="list-group-item list-group-item-action">
+                <i class="bi bi-journal-text me-2"></i> Reporte de Asistencia por Alumno
+            </a>
+            <a th:href="@{/reportes/asistencia/clase}" class="list-group-item list-group-item-action">
+                <i class="bi bi-file-earmark-bar-graph me-2"></i> Reporte de Asistencia por Clase
+            </a>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+</body>
+</html>

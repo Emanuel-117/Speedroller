@@ -1,46 +1,100 @@
 <!DOCTYPE html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registro de Usuario</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${usuario.id == null ? 'Registro de Usuario' : 'Editar Usuario'}">Formulario de Usuario</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <style>
+        body { padding-top: 20px; background-color: #f8f9fa; }
+        .container { background-color: #ffffff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        h1 { color: #007bff; margin-bottom: 25px; }
+        .btn-primary { background-color: #007bff; border-color: #007bff; }
+        .btn-primary:hover { background-color: #0056b3; border-color: #0056b3; }
+    </style>
 </head>
 <body>
-   <div class="container mt-5">
-        <h2>Inscripcion de Usuario</h2>
-        <form th:action="@{/users/guardar}" th:object="${usuario}" method="post">
-            <div class="mb-3">
-                <label for="nombre" class="form-label">Nombre</label>
-                <input type="text" class="form-control" id="nombre" name="nombre" th:field="*{nombre}" placeholder="Ingresa tu nombre" maxlength="50" required>
-            </div>
-            <div class="mb-3">
-                <label for="apellido" class="form-label">Apellido</label>
-                <input type="text" class="form-control" id="apellido" name="apellido" th:field="*{apellido}" placeholder="Ingresa tu apellido" maxlength="50" required>
-            </div>
-            <div class="mb-3">
-                <label for="email" class="form-label">Correo Electrónico</label>
-                <input type="email" class="form-control" id="email" name="email" th:field="*{email}" placeholder="Ingresa tu email" maxlength="100" required>
-                
-            </div>
-            <div class="mb-3">
-                <label for="password" class="form-label">Contraseña</label>
-                <input type="password" class="form-control" id="password" name="password" placeholder="Ingresa tu contraseña" maxlength="50" required>
-            </div>
+   <div class="container mt-5">
+        <h1 th:text="${usuario.id == null ? 'Registrar Nuevo Usuario' : 'Editar Usuario'}"></h1>
+
+        <div th:if="${mensaje}" class="alert alert-success" role="alert">
+            <p th:text="${mensaje}"></p>
+        </div>
+        <div th:if="${error}" class="alert alert-danger" role="alert">
+            <p th:text="${error}"></p>
+        </div>
+
+        <form th:action="@{/users/guardar}" th:object="${usuario}" method="post">
+            <input type="hidden" th:field="*{id}" />
+
             <div class="mb-3">
-                <label for="rol" class="form-label">Rol</label>
-                <select class="form-select" id="rol" th:field="*{rol}" required>
-                    <option value="">Selecciona un rol</option>
-                    <option th:each="rolEnum : ${roles}" th:value="${rolEnum}" th:text="${rolEnum}"></option>
+                <label for="nombre" class="form-label">Nombre</label>
+                <input type="text" class="form-control" id="nombre" th:field="*{nombre}" placeholder="Ingresa tu nombre" maxlength="50" required>
+            </div>
+            <div class="mb-3">
+                <label for="apellido" class="form-label">Apellido</label>
+                <input type="text" class="form-control" id="apellido" th:field="*{apellido}" placeholder="Ingresa tu apellido" maxlength="50" required>
+            </div>
+            <div class="mb-3">
+                <label for="email" class="form-label">Correo Electrónico</label>
+                <input type="email" class="form-control" id="email" th:field="*{email}" placeholder="Ingresa tu email" maxlength="100" required>
+            </div>
+
+            <div class="mb-3">
+                <label for="fechaNacimiento" class="form-label">Fecha de Nacimiento</label>
+                <input type="date" class="form-control" id="fechaNacimiento" th:field="*{fechaNacimiento}">
+            </div>
+            <div class="mb-3">
+                <label for="genero" class="form-label">Género</label>
+                <select class="form-select" id="genero" th:field="*{genero}">
+                    <option value="">Selecciona un género</option>
+                    <option th:each="gen : ${T(com.rollerspeed.rollerspeed.model.GeneroUsuario).values()}"
+                            th:value="${gen}" th:text="${gen}"></option>
                 </select>
             </div>
-            <div class="d-grid gap-2">
-                <button type="submit" class="btn btn-primary">Registrarse</button>
-                <a th:href="@{/users/listar}" class="btn btn-secondary">Cancelar</a>
-            </div>
-        </form>
-    </div>
+            <div class="mb-3">
+                <label for="telefono" class="form-label">Teléfono</label>
+                <input type="text" class="form-control" id="telefono" th:field="*{telefono}" placeholder="Ej: +573001234567" maxlength="20">
+            </div>
+            <div class="mb-3">
+                <label for="medioPago" class="form-label">Medio de Pago Preferido</label>
+                <select class="form-select" id="medioPago" th:field="*{medioPago}">
+                    <option value="">Selecciona un medio de pago</option>
+                    <option th:each="mp : ${T(com.rollerspeed.rollerspeed.model.MedioPago).values()}"
+                            th:value="${mp}" th:text="${mp}"></option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label">Contraseña</label>
+                <input type="password" class="form-control" id="password" th:field="*{password}"
+                        placeholder="Ingresa tu contraseña" maxlength="50" th:attr="required=${usuario.id == null}">
+                <small class="form-text text-muted" th:if="${usuario.id != null}">Deja en blanco para no cambiar la contraseña.</small>
+            </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+           <div class="mb-3" th:if="${rolActual != null and rolActual.equals(T(com.rollerspeed.rollerspeed.model.RolUsuario).ADMIN)}">
+                <label for="rol" class="form-label">Rol</label>
+                 <select class="form-select" id="rol" th:field="*{rol}" required>
+                 <option value="">Selecciona un rol</option>
+                  <option th:each="rolEnum : ${roles}"
+                th:value="${rolEnum}" th:text="${rolEnum.name()}"></option>
+               </select>
+            </div>
+            <input type="hidden" th:field="*{rol}" th:if="${rolActual == null or !rolActual.equals(T(com.rollerspeed.rollerspeed.model.RolUsuario).ADMIN)}" />
+
+
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-primary">Guardar Usuario</button>
+                <a th:href="@{/}" class="btn btn-secondary"
+                   th:if="${rolActual == null}">Cancelar</a> <a th:href="@{/dashboard/admin}" class="btn btn-secondary"
+                   th:if="${rolActual != null and rolActual.equals(T(com.rollerspeed.rollerspeed.model.RolUsuario).ADMIN)}">Cancelar</a>
+                <a th:href="@{/dashboard/profesor}" class="btn btn-secondary"
+                   th:if="${rolActual != null and rolActual.equals(T(com.rollerspeed.rollerspeed.model.RolUsuario).PROFESOR)}">Cancelar</a>
+                <a th:href="@{/dashboard/alumno}" class="btn btn-secondary"
+                   th:if="${rolActual != null and rolActual.equals(T(com.rollerspeed.rollerspeed.model.RolUsuario).ALUMNO)}">Cancelar</a>
+            </div>
+        </form>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
 </body>
 </html>

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>Tomar Asistencia - <span th:text="${clase.nombre}"></span></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="/css/style.css"> <style>
+        /* Estilos básicos para que la página no se vea completamente desnuda sin los fragmentos */
+        body { padding-top: 20px; background-color: #f8f9fa; }
+        .container { background-color: #ffffff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin-bottom: 30px;}
+        h1 { color: #007bff; margin-bottom: 25px; }
+        .table { margin-top: 20px; }
+        .alert { margin-top: 20px; }
+        .logout-link { position: absolute; top: 20px; right: 20px; } /* Para el botón de cerrar sesión */
+        .form-check-input { margin-right: 5px; }
+    </style>
+</head>
+<body>
+    <div class="logout-link">
+        <span class="me-3">Bienvenido, <strong th:text="${session.userRol}"></strong>!</span>
+        <a th:href="@{/logout}" class="btn btn-danger btn-sm">Cerrar Sesión</a>
+    </div>
+
+    <main class="container">
+        <h1>Tomar Asistencia para la Clase: <span th:text="${clase.nombre}"></span></h1>
+        <p>Descripción: <span th:text="${clase.descripcion}"></span></p>
+        <p>Profesor: <span th:text="${clase.profesor.nombre} + ' ' + ${clase.profesor.apellido}"></span></p>
+        <p>Fecha y Hora: <span th:text="${#temporals.format(clase.fechaInicio, 'dd-MM-yyyy HH:mm')}"></span></p>
+
+        <div th:if="${error}" class="alert alert-danger" role="alert" th:text="${error}"></div>
+        <div th:if="${mensaje}" class="alert alert-success" role="alert" th:text="${mensaje}"></div>
+
+        <form th:action="@{/clases/asistencia/guardar}" method="post">
+            <input type="hidden" name="claseId" th:value="${clase.id}">
+
+            <table class="table table-striped table-hover"> <thead>
+                    <tr>
+                        <th>ID Alumno</th>
+                        <th>Nombre Alumno</th>
+                        <th>Presente</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="alumno : ${alumnosInscritos}">
+                        <td th:text="${alumno.id}"></td>
+                        <td th:text="${alumno.nombre} + ' ' + ${alumno.apellido}"></td>
+                        <td>
+                            <div class="form-check">
+                                <input type="checkbox" name="presente" th:value="${alumno.id}" th:id="'presente_' + ${alumno.id}" class="form-check-input">
+                                <label class="form-check-label" th:for="'presente_' + ${alumno.id}">Marcar si está presente</label>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <button type="submit" class="btn btn-primary mt-3">Guardar Asistencia</button> <a th:href="@{'/clases/detalles/' + ${clase.id}}" class="btn btn-secondary mt-3">Cancelar</a> </form>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+</body>
+</html>

@@ -10,42 +10,57 @@
     <div class="container mt-5">
         <h2 th:text="${clase.id == null ? 'Crear Nueva Clase' : 'Editar Clase'}"></h2>
 
-        <div th:if="${error}" class="alert alert-danger" role="alert" th:text="${error}"></div>
-        <div th:if="${mensaje}" class="alert alert-success" role="alert" th:text="${mensaje}"></div>
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <span th:text="${error}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <div th:if="${mensaje}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <span th:text="${mensaje}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
 
         <form th:action="@{/clases/guardar}" th:object="${clase}" method="post">
+            <div th:if="${#fields.hasGlobalErrors()}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                <span th:each="err : ${#fields.globalErrors()}" th:text="${err}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+
             <input type="hidden" th:field="*{id}" th:if="${clase.id != null}" />
 
             <div class="mb-3">
                 <label for="nombre" class="form-label">Nombre de la Clase:</label>
                 <input type="text" id="nombre" name="nombre" th:field="*{nombre}" class="form-control" required>
+                <div class="text-danger" th:if="${#fields.hasErrors('nombre')}" th:errors="*{nombre}"></div>
             </div>
 
             <div class="mb-3">
                 <label for="descripcion" class="form-label">Descripción:</label>
                 <textarea id="descripcion" name="descripcion" th:field="*{descripcion}" class="form-control" rows="3"></textarea>
+                <div class="text-danger" th:if="${#fields.hasErrors('descripcion')}" th:errors="*{descripcion}"></div>
             </div>
 
-            <div class="mb-3">
-                <label for="profesorId" class="form-label">Profesor:</label>
-                <select id="profesorId" name="profesorId" class="form-select" required>
-                    <option value="">Selecciona un profesor</option>
-                    <option th:each="profesor : ${profesores}"
-                            th:value="${profesor.id}"
-                            th:text="${profesor.nombre + ' ' + profesor.apellido}"
-                            th:selected="${clase.profesor != null and clase.profesor.id == profesor.id}">
-                    </option>
-                </select>
-                </div>
+           <div class="mb-3">
+    <label for="profesorId" class="form-label">Profesor:</label>
+    <select id="profesorId" name="profesor" class="form-select"> <option value="" selected>Selecciona un profesor</option> 
+        <option th:each="profesor : ${profesores}"
+                th:value="${profesor.id}"
+                th:text="${profesor.nombre + ' ' + profesor.apellido}"
+                th:selected="${clase.profesor != null and clase.profesor.id == profesor.id}">
+        </option>
+    </select>
+    <div class="text-danger" th:if="${#fields.hasErrors('profesor')}" th:errors="*{profesor}"></div>
+</div>
 
             <div class="mb-3">
                 <label for="fechaInicio" class="form-label">Fecha y Hora de Inicio:</label>
                 <input type="datetime-local" id="fechaInicio" name="fechaInicio" th:field="*{fechaInicio}" class="form-control" required>
+                <div class="text-danger" th:if="${#fields.hasErrors('fechaInicio')}" th:errors="*{fechaInicio}"></div>
             </div>
 
             <div class="mb-3">
                 <label for="fechaFin" class="form-label">Fecha y Hora de Fin:</label>
                 <input type="datetime-local" id="fechaFin" name="fechaFin" th:field="*{fechaFin}" class="form-control" required>
+                <div class="text-danger" th:if="${#fields.hasErrors('fechaFin')}" th:errors="*{fechaFin}"></div>
             </div>
 
             <button type="submit" class="btn btn-primary">Guardar Clase</button>

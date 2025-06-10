@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inscribir Usuario a Clase (Admin)</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <h2>Inscribir Usuario a Clase</h2>
+
+        <div th:if="${mensaje}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <span th:text="${mensaje}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <span th:text="${error}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <form th:action="@{/clases/admin/inscribir}" method="post">
+            <div class="mb-3">
+                <label for="alumnoId" class="form-label">Seleccionar Alumno:</label>
+                <select id="alumnoId" name="alumnoId" class="form-select" required>
+                    <option value="">-- Seleccione un alumno --</option>
+                    <option th:each="alumno : ${alumnos}" 
+                            th:value="${alumno.id}" 
+                            th:text="${alumno.nombre + ' ' + alumno.apellido + ' (' + alumno.email + ')'}">
+                    </option>
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label for="claseId" class="form-label">Seleccionar Clase:</label>
+                <select id="claseId" name="claseId" class="form-select" required>
+                    <option value="">-- Seleccione una clase --</option>
+                    <option th:each="clase : ${clases}" 
+                            th:value="${clase.id}" 
+                            th:text="${clase.nombre + ' - Profesor: ' + (clase.profesor != null ? clase.profesor.nombre + ' ' + clase.profesor.apellido : 'N/A')}">
+                    </option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Inscribir</button>
+            <a th:href="@{/dashboard}" class="btn btn-secondary">Cancelar y Volver al Dashboard</a>
+        </form>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

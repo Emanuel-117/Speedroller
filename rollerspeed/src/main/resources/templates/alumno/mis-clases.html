@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis Clases Inscritas - Roller Speed</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { padding-top: 20px; background-color: #f8f9fa; }
+        .container { background-color: #ffffff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        h1 { color: #007bff; margin-bottom: 25px; }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>Mis Clases Inscritas</h1>
+
+        <div th:if="${#lists.isEmpty(clasesInscritas)}" class="alert alert-info">
+            <p>No estás inscrito en ninguna clase aún.</p>
+        </div>
+
+        <div th:unless="${#lists.isEmpty(clasesInscritas)}">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Nombre de la Clase</th>
+                        <th>Día</th>
+                        <th>Hora</th>
+                        <th>Profesor</th>
+                        </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="clase : ${clasesInscritas}">
+                        <td th:text="${clase.nombre}"></td>
+                        <td th:text="${clase.diaSemana}"></td>
+                        <td th:text="${clase.horaInicio}"></td>
+                        <td th:text="${clase.profesor != null ? clase.profesor.nombre + ' ' + clase.profesor.apellido : 'N/A'}"></td>
+                        </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="mt-4">
+            <a th:href="@{/dashboard/alumno}" class="btn btn-secondary">Volver al Dashboard</a>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

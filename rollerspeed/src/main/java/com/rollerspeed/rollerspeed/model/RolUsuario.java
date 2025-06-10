@@ -1,7 +1,9 @@
 package com.rollerspeed.rollerspeed.model;
 
 public enum RolUsuario {
-    ALUMNO,
+    ADMIN,
     PROFESOR,
-    ADMIN 
+    ALUMNO;
+
+    
 }

@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roller Speed - Escuela de Patinaje</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+        }
+        .navbar-custom {
+            background-color: #007bff; /* Azul primario */
+        }
+        .navbar-custom .navbar-brand, .navbar-custom .nav-link {
+            color: #ffffff;
+        }
+        .navbar-custom .nav-link:hover {
+            color: #e2e6ea;
+        }
+        .hero-section {
+            background: linear-gradient(rgba(0, 123, 255, 0.7), rgba(0, 123, 255, 0.7)), url('/images/patinaje-hero.jpg') no-repeat center center/cover;
+            color: white;
+            padding: 100px 0;
+            text-align: center;
+        }
+        .hero-section h1 {
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+        }
+        .hero-section p {
+            font-size: 1.25rem;
+            margin-bottom: 40px;
+        }
+        .info-section {
+            padding: 60px 0;
+            text-align: center;
+        }
+        .info-section h2 {
+            margin-bottom: 40px;
+            color: #333;
+            font-weight: bold;
+        }
+        .info-card {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            transition: transform 0.3s ease;
+            height: 100%; /* Asegura que todas las tarjetas tengan la misma altura */
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .info-card:hover {
+            transform: translateY(-5px);
+        }
+        .info-card i {
+            font-size: 3rem;
+            color: #007bff;
+            margin-bottom: 20px;
+        }
+        .footer-section {
+            background-color: #343a40; /* Gris oscuro */
+            color: white;
+            padding: 40px 0;
+            text-align: center;
+        }
+        .footer-section p {
+            margin-bottom: 0;
+        }
+        /* Estilos adicionales para los botones */
+        .btn-custom {
+            background-color: #28a745; /* Verde para Registrarse */
+            border-color: #28a745;
+            color: white;
+        }
+        .btn-custom:hover {
+            background-color: #218838;
+            border-color: #1e7e34;
+        }
+        /* Estilos para la galería */
+        .gallery-item {
+            margin-bottom: 30px;
+        }
+        .gallery-item img {
+            max-width: 100%;
+            height: 200px; /* Altura fija para las imágenes de la galería */
+            object-fit: cover; /* Recorta la imagen para que cubra el espacio */
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        /* Estilos para testimonios */
+        .testimonial-card {
+            background-color: #fff;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        .testimonial-card .quote {
+            font-style: italic;
+            margin-bottom: 15px;
+            color: #555;
+        }
+        .testimonial-card .author {
+            font-weight: bold;
+            color: #007bff;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom fixed-top">
+        <a class="navbar-brand" th:href="@{/}">Roller Speed</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/login}">Iniciar Sesión</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/users/registrar-alumno}">Registrarse</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <section class="hero-section">
+        <div class="container">
+            <h1 class="display-3">Bienvenido a Roller Speed</h1>
+            <p class="lead">La escuela de patinaje "Roller Speed", ubicada en Santa Marta, Colombia, se complace en presentar su nueva plataforma web para optimizar la gestión de alumnos, clases, instructores y pagos.</p>
+            <p class="lead">Explora nuestro sitio para conocer nuestra misión, visión, valores, los servicios que ofrecemos y los próximos eventos.</p>
+            <a th:href="@{#institucional}" class="btn btn-light btn-lg mx-2">Ver Más Información</a>
+            <a th:href="@{/users/registrar-alumno}" class="btn btn-custom btn-lg mx-2">¡Regístrate Ahora!</a>
+        </div>
+    </section>
+
+    <section id="institucional" class="info-section">
+        <div class="container">
+            <h2 class="section-title">Nuestra Escuela</h2>
+            <div class="row justify-content-center">
+                <div class="col-md-10">
+                    <div class="info-card text-left">
+                        <i class="fas fa-building"></i>
+                        <h3>Historia y Propósito</h3>
+                        <p>Roller Speed fue fundada en 2010 con la visión de crear un espacio donde niños, jóvenes y adultos pudieran desarrollar su pasión por el patinaje artístico y de velocidad. Desde nuestros inicios, nos hemos comprometido a ofrecer una enseñanza de calidad, promoviendo no solo las habilidades técnicas, sino también valores fundamentales como la disciplina, el respeto y el trabajo en equipo. Nuestro propósito es formar atletas integrales y ciudadanos ejemplares, brindando oportunidades para el crecimiento personal y deportivo en un ambiente seguro y motivador.</p>
+                        
+                        <h3 class="mt-4">Logros Destacados</h3>
+                        <ul>
+                            <li>Participación y medallas en campeonatos departamentales y nacionales desde 2015.</li>
+                            <li>Formación de patinadores que han representado a Colombia en eventos internacionales.</li>
+                            <li>Reconocimiento por la comunidad como una de las mejores escuelas de patinaje de la región.</li>
+                            <li>Implementación de programas de inclusión para patinadores con diferentes habilidades.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="mision" class="info-section bg-light">
+        <div class="container">
+            <h2 class="section-title">Acerca de Nosotros</h2>
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="info-card">
+                        <i class="fas fa-bullseye"></i>
+                        <h3>Misión</h3>
+                        <p>Brindar una educación de patinaje de alta calidad, fomentando el desarrollo integral de nuestros alumnos, su pasión por el deporte y un estilo de vida saludable.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="info-card">
+                        <i class="fas fa-eye"></i>
+                        <h3>Visión</h3>
+                        <p>Ser la escuela de patinaje líder en Colombia, reconocida por nuestra excelencia académica, innovación metodológica y el éxito de nuestros patinadores a nivel nacional e internacional.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="info-card">
+                        <i class="fas fa-handshake"></i>
+                        <h3>Valores</h3>
+                        <p>Compromiso, disciplina, respeto, trabajo en equipo y pasión por el patinaje, pilares fundamentales en la formación de nuestros deportistas.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="servicios" class="info-section">
+        <div class="container">
+            <h2 class="section-title">Nuestros Servicios</h2>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="info-card">
+                        <i class="fas fa-skating"></i>
+                        <h3>Clases Personalizadas</h3>
+                        <p>Programas de entrenamiento adaptados a tu nivel y objetivos, con instructores expertos.</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="info-card">
+                        <i class="fas fa-users"></i>
+                        <h3>Clases Grupales</h3>
+                        <p>Aprende y socializa en un ambiente dinámico y motivador, para todas las edades y niveles.</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="info-card">
+                        <i class="fas fa-medal"></i>
+                        <h3>Preparación Competitiva</h3>
+                        <p>Entrenamiento especializado para atletas que buscan destacar en competiciones locales y nacionales.</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="info-card">
+                        <i class="fas fa-calendar-alt"></i>
+                        <h3>Eventos y Talleres</h3>
+                        <p>Participa en clinics, talleres y eventos especiales para mejorar tus habilidades y disfrutar del patinaje.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="galeria" class="info-section bg-light">
+        <div class="container">
+            <h2 class="section-title">Galería</h2>
+            <div class="row">
+                <div class="col-md-4 gallery-item">
+                    <img src="/images/galeria-1.jpg" alt="Entrenamiento de Patinaje 1" class="img-fluid">
+                    <p class="mt-2">Entrenamiento de técnica avanzada.</p>
+                </div>
+                <div class="col-md-4 gallery-item">
+                    <img src="/images/galeria-2.jpg" alt="Evento de Patinaje 2" class="img-fluid">
+                    <p class="mt-2">Competencia regional de velocidad.</p>
+                </div>
+                <div class="col-md-4 gallery-item">
+                    <img src="/images/galeria-3.jpg" alt="Logro en Patinaje 3" class="img-fluid">
+                    <p class="mt-2">Podio en campeonato nacional.</p>
+                </div>
+                <div class="col-md-4 gallery-item">
+                    <img src="/images/galeria-4.jpg" alt="Clase Principiantes" class="img-fluid">
+                    <p class="mt-2">Clases divertidas para principiantes.</p>
+                </div>
+                <div class="col-md-4 gallery-item">
+                    <img src="/images/galeria-5.jpg" alt="Patinaje Artístico" class="img-fluid">
+                    <p class="mt-2">Demostración de patinaje artístico.</p>
+                </div>
+                <div class="col-md-4 gallery-item">
+                    <img src="/images/galeria-6.jpg" alt="Entrenamiento en Grupo" class="img-fluid">
+                    <p class="mt-2">Sesión de entrenamiento en grupo.</p>
+                </div>
+                </div>
+            </div>
+    </section>
+
+    <section id="testimonios" class="info-section">
+        <div class="container">
+            <h2 class="section-title">Lo que dicen nuestros alumnos y padres</h2>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="testimonial-card">
+                        <p class="quote">"Desde que mi hija se unió a Roller Speed, no solo ha mejorado increíblemente en patinaje, sino que también ha ganado confianza y disciplina. ¡Estamos muy felices con la escuela!"</p>
+                        <p class="author">- María P., Madre de Alumna</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="testimonial-card">
+                        <p class="quote">"Los profesores son fantásticos, muy pacientes y motivadores. He aprendido mucho en poco tiempo y me encanta el ambiente de compañerismo."</p>
+                        <p class="author">- Juan S., Alumno</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="testimonial-card">
+                        <p class="quote">"Nunca pensé que podría patinar así. Roller Speed me ha dado las herramientas y la confianza para superar mis límites. ¡Recomendado 100%!"</p>
+                        <p class="author">- Sofía G., Alumna</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="testimonial-card">
+                        <p class="quote">"La organización de las clases y los eventos es impecable. Se nota el profesionalismo y la dedicación del equipo de Roller Speed."</p>
+                        <p class="author">- Carlos M., Padre de Alumno</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="noticias-eventos" class="info-section bg-light">
+        <div class="container">
+            <h2 class="section-title">Noticias y Próximos Eventos</h2>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="info-card text-left">
+                        <i class="fas fa-newspaper"></i>
+                        <h3>Últimas Noticias</h3>
+                        <h5 class="mt-3">Nuevos horarios de clases de verano</h5>
+                        <p>Hemos abierto nuevas franjas horarias para las clases de verano, incluyendo opciones para patinaje artístico y velocidad. Consulta el calendario para más detalles.</p>
+                        <h5 class="mt-3">Éxito en el Campeonato Nacional</h5>
+                        <p>Nuestros atletas trajeron a casa 5 medallas de oro y 3 de plata en el reciente Campeonato Nacional de Patinaje. ¡Felicidades a todos los participantes!</p>
+                        <h5 class="mt-3">Taller de Mantenimiento de Patines</h5>
+                        <p>Próximamente, realizaremos un taller gratuito sobre el cuidado y mantenimiento básico de los patines. Mantente atento a nuestras redes sociales para la fecha y hora.</p>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="info-card text-left">
+                        <i class="fas fa-calendar-check"></i>
+                        <h3>Próximos Eventos</h3>
+                        <h5 class="mt-3">Festival Anual de Patinaje "Roller Fest"</h5>
+                        <p><strong>Fecha:</strong> 15 de agosto de 2025</p>
+                        <p><strong>Lugar:</strong> Pista Municipal de Patinaje</p>
+                        <p>Un día lleno de exhibiciones, competencias amistosas y actividades para toda la familia. ¡No te lo pierdas!</p>
+                        <h5 class="mt-3">Clínic Intensivo de Salto y Giros</h5>
+                        <p><strong>Fecha:</strong> 22-23 de septiembre de 2025</p>
+                        <p><strong>Instructor Invitado:</strong> Campeón Panamericano de Patinaje</p>
+                        <p>Dos días de entrenamiento avanzado para perfeccionar tus técnicas de salto y giro.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer-section">
+        <div class="container">
+            <p>&copy; 2024 Roller Speed. Todos los derechos reservados.</p>
+            <p>Contacto: info@rollerspeed.com | Tel: +57 300 123 4567</p>
+        </div>
+    </footer>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
