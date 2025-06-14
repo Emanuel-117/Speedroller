@@ -1,0 +1,872 @@
+package com.rollerspeed.rollerspeed.documentation;
+
+// Esta clase NO es funcional. Es puramente documental para explicar la implementación de Spring Security.
+// No debe ser compilada ni incluida en tu build final como parte de la lógica de negocio.
+
+/**
+ * Guía de Implementación de Spring Security para la Aplicación Roller Speed.
+ *
+ * Esta "clase" documenta las adiciones y modificaciones necesarias en las diferentes capas
+ * de la aplicación para integrar Spring Security de manera efectiva y limpia.
+ * El objetivo es centralizar las explicaciones sin sobrecargar los archivos de código funcional.
+ */
+public class ImplementacionSpringSecurity {
+
+    // --- 1. DEPENDENCIAS (pom.xml) ---
+    // Asegúrate de tener las siguientes dependencias en tu archivo pom.xml:
+    /*
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-security</artifactId>
+    </dependency>
+    <dependency>
+        <groupId>org.springframework.security</groupId>
+        <artifactId>spring-security-test</artifactId>
+        <scope>test</scope>
+    </dependency>
+    <dependency>
+        <groupId>org.thymeleaf.extras</groupId>
+        <artifactId>thymeleaf-extras-springsecurity6</artifactId>
+    </dependency>
+    */
+
+    // --- 2. CONFIGURACIÓN DE SEGURIDAD (Clase de Configuración) ---
+    // Esta es la clase central donde se define el comportamiento de Spring Security.
+    // Generalmente se ubica en un paquete como `config` o `security`.
+
+    // src/main/java/com/rollerspeed/rollerspeed/config/SecurityConfig.java
+    /*
+    package com.rollerspeed.rollerspeed.config;
+
+    import com.rollerspeed.rollerspeed.Service.CustomUserDetailsService; // Tu servicio de carga de usuarios
+    import org.springframework.context.annotation.Bean;
+    import org.springframework.context.annotation.Configuration;
+    import org.springframework.security.authentication.AuthenticationManager;
+    import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+    import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+    import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity; // Para @PreAuthorize
+    import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+    import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+    import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder; // Para encriptar contraseñas
+    import org.springframework.security.crypto.password.PasswordEncoder;
+    import org.springframework.security.web.SecurityFilterChain;
+    import org.springframework.security.web.authentication.AuthenticationSuccessHandler; // Para manejar redirección post-login
+    import org.springframework.security.web.util.matcher.AntPathRequestMatcher; // Para el logout
+
+    @Configuration
+    @EnableWebSecurity // Habilita la seguridad web en Spring
+    @EnableMethodSecurity(prePostEnabled = true) // Habilita @PreAuthorize y @PostAuthorize
+    public class SecurityConfig {
+
+        private final CustomUserDetailsService customUserDetailsService; // Servicio personalizado para cargar usuarios
+
+        public SecurityConfig(CustomUserDetailsService customUserDetailsService) {
+            this.customUserDetailsService = customUserDetailsService;
+        }
+
+        @Bean
+        public PasswordEncoder passwordEncoder() {
+            // Utiliza BCrypt para la codificación segura de contraseñas
+            return new BCryptPasswordEncoder();
+        }
+
+        @Bean
+        public DaoAuthenticationProvider authenticationProvider() {
+            // Define cómo Spring Security va a autenticar a los usuarios
+            DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+            authProvider.setUserDetailsService(customUserDetailsService); // Usa tu servicio de carga de usuarios
+            authProvider.setPasswordEncoder(passwordEncoder()); // Usa el codificador de contraseñas
+            return authProvider;
+        }
+
+        @Bean
+        public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
+            // Permite inyectar el AuthenticationManager en otros componentes (ej. para autenticación manual)
+            return authConfig.getAuthenticationManager();
+        }
+
+        @Bean
+        public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+            http
+                .csrf(csrf -> csrf.disable()) // Deshabilita CSRF (considerar habilitar en producción con un manejo adecuado)
+                                             // Deshabilita CSRF para desarrollo, pero en producción deberías usarlo
+                                             // con tokens CSRF en formularios POST.
+
+                .authorizeHttpRequests(authorize -> authorize
+                    // Rutas públicas (accesibles sin autenticación)
+                    .requestMatchers("/", "/publicIndex", "/login", "/users/registrar-alumno", "/css/**", "/js/**", "/images/**").permitAll()
+                    // Rutas permitidas para ADMIN
+                    .requestMatchers("/admin/**", "/users/listar", "/users/eliminar/**", "/users/nuevo", "/users/guardar", "/users/editar/**", "/clases/**", "/pagos/**", "/reportes/**").hasRole("ADMIN")
+                    // Rutas permitidas para PROFESOR
+                    .requestMatchers("/profesor/**", "/clases/profesor/**", "/reportes/asistencia/clase/**").hasRole("PROFESOR")
+                    // Rutas permitidas para ALUMNO
+                    .requestMatchers("/alumno/**", "/clases/alumno/**", "/users/perfil", "/users/alumno/mis-clases").hasRole("ALUMNO")
+                    // Cualquier otra solicitud requiere autenticación
+                    .anyRequest().authenticated()
+                )
+                .formLogin(form -> form
+                    .loginPage("/login") // Ruta de tu página de inicio de sesión personalizada
+                    .loginProcessingUrl("/login") // URL a la que el formulario de login envía los datos (POST)
+                    .successHandler(customAuthenticationSuccessHandler()) // Manejador de éxito personalizado
+                    .failureUrl("/login?error=true") // URL a la que se redirige si el login falla
+                    .permitAll() // Permitir acceso a la página de login a todos
+                )
+                .logout(logout -> logout
+                    .logoutRequestMatcher(new AntPathRequestMatcher("/logout")) // URL para cerrar sesión (POST o GET)
+                    .logoutSuccessUrl("/login?logout=true") // URL a la que se redirige después de cerrar sesión
+                    .invalidateHttpSession(true) // Invalida la sesión HTTP
+                    .deleteCookies("JSESSIONID") // Elimina cookies de sesión
+                    .permitAll() // Permitir acceso a la URL de logout a todos
+                )
+                .exceptionHandling(exception -> exception
+                    .accessDeniedPage("/access-denied") // Página a mostrar si el usuario no tiene permisos
+                );
+
+            return http.build();
+        }
+
+        @Bean
+        public AuthenticationSuccessHandler customAuthenticationSuccessHandler() {
+            // Define la lógica de redirección después de un inicio de sesión exitoso.
+            // Esto reemplaza la lógica de redirección manual que tenías en AuthController.
+            return (request, response, authentication) -> {
+                if (authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
+                    response.sendRedirect("/admin/dashboard");
+                } else if (authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_PROFESOR"))) {
+                    response.sendRedirect("/profesor/dashboard");
+                } else if (authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ALUMNO"))) {
+                    response.sendRedirect("/alumno/dashboard");
+                } else {
+                    response.sendRedirect("/"); // Redirección por defecto
+                }
+            };
+        }
+    }
+    */
+
+    // --- 3. SERVICIO DE DETALLES DE USUARIO (CustomUserDetailsService) ---
+    // Spring Security necesita un servicio que sepa cómo cargar los detalles del usuario
+    // desde tu base de datos o cualquier fuente de datos.
+
+    // src/main/java/com/rollerspeed/rollerspeed/Service/CustomUserDetailsService.java
+    /*
+    package com.rollerspeed.rollerspeed.Service;
+
+    import com.rollerspeed.rollerspeed.Repository.userRepository;
+    import com.rollerspeed.rollerspeed.model.Usuario;
+    import org.springframework.security.core.userdetails.UserDetails;
+    import org.springframework.security.core.userdetails.UserDetailsService;
+    import org.springframework.security.core.userdetails.UsernameNotFoundException;
+    import org.springframework.stereotype.Service;
+    import org.springframework.security.core.GrantedAuthority;
+    import org.springframework.security.core.authority.SimpleGrantedAuthority;
+
+    import java.util.Collections; // Importar para Collections.singletonList
+
+    @Service
+    public class CustomUserDetailsService implements UserDetailsService {
+
+        private final userRepository userRepository;
+
+        public CustomUserDetailsService(userRepository userRepository) {
+            this.userRepository = userRepository;
+        }
+
+        @Override
+        public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+            // Carga el usuario desde tu repositorio usando el email (que es el "username" para Spring Security)
+            Usuario usuario = userRepository.findByEmail(email)
+                                            .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado con email: " + email));
+
+            // Convierte el rol de tu usuario a una GrantedAuthority requerida por Spring Security
+            // Los roles deben comenzar con "ROLE_" (ej. "ROLE_ADMIN", "ROLE_PROFESOR", "ROLE_ALUMNO")
+            GrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + usuario.getRol().name());
+
+            // Retorna un objeto UserDetails (la implementación de Spring Security de un usuario)
+            return new org.springframework.security.core.userdetails.User(
+                    usuario.getEmail(),             // El "username" (aquí el email)
+                    usuario.getPassword(),          // La contraseña (ya encriptada)
+                    Collections.singletonList(authority) // Lista de roles/autoridades
+            );
+        }
+    }
+    */
+
+    // --- 4. MODELO DE USUARIO (Usuario.java) ---
+    // Tu entidad Usuario debe tener campos para email (que actuará como username) y password.
+    // La contraseña DEBE ser almacenada encriptada en la base de datos.
+
+    // src/main/java/com/rollerspeed/rollerspeed/model/Usuario.java
+    /*
+    package com.rollerspeed.rollerspeed.model;
+
+    // ... otros imports ...
+    import jakarta.persistence.Column;
+    import jakarta.persistence.Entity;
+    import jakarta.persistence.EnumType;
+    import jakarta.persistence.Enumerated;
+    // ...
+
+    @Entity
+    // ...
+    public class Usuario {
+        // ... otros campos ...
+
+        @Column(nullable = false, unique = true, length = 100)
+        private String email; // Usado como 'username' por Spring Security
+
+        @Column(nullable = false, length = 60) // La longitud para BCrypt suele ser 60
+        private String password; // La contraseña DEBE estar encriptada
+
+        @Enumerated(EnumType.STRING)
+        @Column(nullable = false, length = 20)
+        private RolUsuario rol; // Tu enum RolUsuario
+
+        // ... getters y setters (generados por Lombok @Data) ...
+
+        // Importante: Cuando guardes un nuevo usuario o actualices su contraseña,
+        // asegúrate de encriptarla usando PasswordEncoder.
+
+        // Ejemplo en UsuarioService.java (ver sección 6)
+    }
+    */
+
+    // --- 5. ENUM DE ROLES (RolUsuario.java) ---
+    // Tu enum para los roles es crucial para la autorización.
+
+    // src/main/java/com/rollerspeed/rollerspeed/model/RolUsuario.java
+    /*
+    package com.rollerspeed.rollerspeed.model;
+
+    public enum RolUsuario {
+        ADMIN,      // Se mapeará a "ROLE_ADMIN" en Spring Security
+        PROFESOR,   // Se mapeará a "ROLE_PROFESOR"
+        ALUMNO;     // Se mapeará a "ROLE_ALUMNO"
+    }
+    */
+
+    // --- 6. SERVICIOS (Ej. UsuarioService.java) ---
+    // Modifica tus servicios para encriptar contraseñas y, opcionalmente,
+    // para usar las anotaciones de seguridad de método (`@PreAuthorize`).
+
+    // src/main/java/com/rollerspeed/rollerspeed/Service/UsuarioService.java
+    /*
+    package com.rollerspeed.rollerspeed.Service;
+
+    // ... otros imports ...
+    import org.springframework.security.crypto.password.PasswordEncoder; // Importar PasswordEncoder
+    import org.springframework.security.access.prepost.PreAuthorize; // Importar para anotaciones de seguridad
+
+    @Service
+    public class UsuarioService {
+
+        private final userRepository usuarioRepository;
+        private final PasswordEncoder passwordEncoder; // Inyectar PasswordEncoder
+
+        // Constructor para inyección de dependencias
+        public UsuarioService(userRepository usuarioRepository, PasswordEncoder passwordEncoder) {
+            this.usuarioRepository = usuarioRepository;
+            this.passwordEncoder = passwordEncoder;
+        }
+
+        // ... otros métodos ...
+
+        // Modificar el método de guardar usuario para encriptar la contraseña
+        @PreAuthorize("hasRole('ADMIN')") // Solo ADMIN puede guardar/actualizar usuarios arbitrariamente
+        public Usuario guardaUsuario(Usuario usuario) {
+            // Solo encripta la contraseña si es nueva o ha sido cambiada
+            if (usuario.getId() == null || (usuario.getPassword() != null && !usuario.getPassword().isEmpty())) {
+                usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
+            } else {
+                // Si es una actualización y la contraseña viene vacía, recupera la contraseña existente
+                usuarioRepository.findById(usuario.getId()).ifPresent(existingUser ->
+                    usuario.setPassword(existingUser.getPassword())
+                );
+            }
+            return usuarioRepository.save(usuario);
+        }
+
+        // Ejemplo de uso de @PreAuthorize para control de acceso a métodos
+        @PreAuthorize("hasRole('ADMIN')")
+        public void deleteUsuario(Long id) {
+            // Lógica para verificar si el usuario no intenta eliminarse a sí mismo, etc.
+            usuarioRepository.deleteById(id);
+        }
+
+        @PreAuthorize("hasAnyRole('ADMIN', 'PROFESOR', 'ALUMNO')") // Todos pueden ver su perfil
+        public Optional<Usuario> getUsuarioByEmail(String email) {
+            return usuarioRepository.findByEmail(email);
+        }
+
+        @PreAuthorize("hasAnyRole('ADMIN', 'PROFESOR')") // Solo admin y profesor pueden ver todos los usuarios
+        public List<Usuario> getUsuarios() {
+            return usuarioRepository.findAll();
+        }
+
+        // ... otros métodos, aplicando @PreAuthorize según sea necesario ...
+    }
+    */
+
+    // --- 7. CONTROLADORES (Anotaciones de Seguridad y Manejo de Autenticación) ---
+    // Elimina la lógica de sesión manual y usa las anotaciones de Spring Security.
+
+    // src/main/java/com/rollerspeed/rollerspeed/Controller/AuthController.java
+    /*
+    package com.rollerspeed.rollerspeed.Controller;
+
+    // ELIMINA imports de HttpSession y SecurityContextHolder para manejar roles directamente
+    // con Spring Security.
+    import org.springframework.security.core.Authentication; // Mantén este import
+    import org.springframework.stereotype.Controller;
+    import org.springframework.ui.Model;
+    import org.springframework.web.bind.annotation.GetMapping;
+    import org.springframework.web.bind.annotation.PostMapping; // Si necesitas procesar el login manualmente, aunque Spring Security lo hace por defecto
+    import org.springframework.web.bind.annotation.RequestParam;
+    import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+    @Controller
+    public class AuthController {
+
+        // Ya NO necesitas inyectar UsuarioService aquí para manejar la autenticación/redirección
+        // porque Spring Security lo hará por ti con CustomUserDetailsService y SecurityConfig.
+        // Solo necesitas los servicios si el controlador realiza otras operaciones (ej. registro).
+
+        // @Autowired
+        // private UsuarioService userService; // Solo si necesitas métodos de userService directamente aquí, ej. para registro.
+
+        @GetMapping("/")
+        public String index() {
+            // Spring Security redirigirá automáticamente a /login si no está autenticado
+            // o a la página de inicio (ej. dashboard) si ya lo está.
+            return "redirect:/publicIndex"; // Página pública por defecto
+        }
+
+        @GetMapping("/publicIndex")
+        public String publicIndex() {
+            return "publicIndex"; // Tu página pública sin necesidad de autenticación
+        }
+
+        @GetMapping("/login")
+        public String showLoginForm(Model model, @RequestParam(value = "error", required = false) String error,
+                                     @RequestParam(value = "logout", required = false) String logout) {
+            // Los parámetros 'error' y 'logout' son manejados por Spring Security.
+            // Solo se añaden al modelo para mostrarlos en la vista.
+            if (error != null) {
+                model.addAttribute("error", "Credenciales inválidas. Por favor, inténtalo de nuevo.");
+            }
+            if (logout != null) {
+                model.addAttribute("mensaje", "Has cerrado sesión exitosamente.");
+            }
+            return "login";
+        }
+
+        // Ya NO necesitas un método @PostMapping("/login") personalizado si usas la configuración por defecto
+        // de Spring Security para el formulario de login.
+
+        @GetMapping("/admin/dashboard")
+        @PreAuthorize("hasRole('ADMIN')") // Solo usuarios con rol ADMIN
+        public String showAdminDashboard(Model model) {
+            // Puedes añadir datos específicos del dashboard aquí
+            // model.addAttribute("totalUsuarios", userService.getUsuarios().size()); // Si UserService tiene método público y autorizado
+            return "admin/adminDashboard";
+        }
+
+        @GetMapping("/profesor/dashboard")
+        @PreAuthorize("hasRole('PROFESOR')") // Solo usuarios con rol PROFESOR
+        public String showProfesorDashboard(Model model) {
+            return "profesor/profesorDashboard";
+        }
+
+        @GetMapping("/alumno/dashboard")
+        @PreAuthorize("hasRole('ALUMNO')") // Solo usuarios con rol ALUMNO
+        public String showAlumnoDashboard(Model model) {
+            return "alumno/alumnoDashboard";
+        }
+
+        @GetMapping("/access-denied")
+        public String accessDenied(Model model) {
+            model.addAttribute("errorMessage", "No tienes permiso para acceder a esta página.");
+            return "accessDenied";
+        }
+    }
+    */
+
+    // src/main/java/com/rollerspeed/rollerspeed/Controller/ClaseController.java
+    /*
+    package com.rollerspeed.rollerspeed.Controller;
+
+    // ... imports ...
+    import org.springframework.security.access.prepost.PreAuthorize; // Importar para anotaciones de seguridad
+    import org.springframework.security.core.Authentication; // Importar Authentication para obtener detalles del usuario logueado
+
+    @Controller
+    @RequestMapping("/clases")
+    public class ClaseController {
+        // ... autowired services ...
+
+        @GetMapping("/listarClases")
+        @PreAuthorize("hasAnyRole('ADMIN', 'PROFESOR')") // Solo ADMIN y PROFESOR pueden listar clases
+        public String listarClases(Model model, Authentication authentication) {
+            // La lógica para filtrar clases por profesor ahora puede ser más limpia.
+            // Puedes obtener el email o ID del usuario autenticado de 'authentication'.
+            // Ejemplo para el dashboard de profesor:
+            // if (authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_PROFESOR"))) {
+            //    Usuario profesorActual = usuarioService.getUsuarioByEmail(authentication.getName())
+            //                                         .orElseThrow(() -> new RuntimeException("Profesor no encontrado"));
+            //    model.addAttribute("clases", claseService.findClasesByProfesor(profesorActual));
+            // } else { // ADMIN
+            //    model.addAttribute("clases", claseService.getAllClases());
+            // }
+            model.addAttribute("clases", claseService.getAllClases());
+            // Añadir el rol del usuario actual al modelo si la vista lo necesita
+            model.addAttribute("rolActual", authentication.getAuthorities().iterator().next().getAuthority().replace("ROLE_", ""));
+            return "clases/listarClases";
+        }
+
+        @GetMapping("/nuevo")
+        @PreAuthorize("hasRole('ADMIN')") // Solo ADMIN puede acceder al formulario de nueva clase
+        public String mostrarFormularioNuevaClase(Model model) {
+            model.addAttribute("clase", new Clase());
+            model.addAttribute("profesores", usuarioService.getUsuariosByRol(RolUsuario.PROFESOR));
+            return "clases/claseForm";
+        }
+
+        @PostMapping("/guardar")
+        @PreAuthorize("hasRole('ADMIN')") // Solo ADMIN puede guardar clases
+        public String guardarClase(@ModelAttribute("clase") @Valid Clase clase, BindingResult result, RedirectAttributes redirectAttributes) {
+            // ... lógica de validación y guardado ...
+            return "redirect:/clases/listarClases";
+        }
+
+        @GetMapping("/editar/{id}")
+        @PreAuthorize("hasRole('ADMIN')") // Solo ADMIN puede editar clases
+        public String mostrarFormularioEditarClase(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes) {
+            // ... lógica para buscar y mostrar formulario ...
+            return "clases/claseForm";
+        }
+
+        @PostMapping("/eliminar/{id}")
+        @PreAuthorize("hasRole('ADMIN')") // Solo ADMIN puede eliminar clases
+        public String eliminarClase(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+            // ... lógica de eliminación ...
+            return "redirect:/clases/listarClases";
+        }
+
+        @GetMapping("/alumno/mis-clases")
+        @PreAuthorize("hasRole('ALUMNO')") // Solo ALUMNO puede ver sus clases
+        public String mostrarMisClasesAlumno(Model model, Authentication authentication) {
+            String userEmail = authentication.getName();
+            Usuario alumnoActual = usuarioService.getUsuarioByEmail(userEmail)
+                                                .orElseThrow(() -> new RuntimeException("Alumno autenticado no encontrado"));
+            model.addAttribute("clasesInscritas", claseService.findClasesByAlumno(alumnoActual));
+            return "alumno/mis-clases";
+        }
+
+        @PostMapping("/alumno/inscribir")
+        @PreAuthorize("hasRole('ALUMNO')") // Solo ALUMNO puede inscribirse
+        public String inscribirAlumnoEnClase(@RequestParam Long claseId, RedirectAttributes redirectAttributes, Authentication authentication) {
+            String userEmail = authentication.getName();
+            Usuario alumnoActual = usuarioService.getUsuarioByEmail(userEmail)
+                                                 .orElseThrow(() -> new RuntimeException("Usuario autenticado no encontrado"));
+
+            try {
+                if (usuarioService.inscribirUsuarioAClase(alumnoActual.getId(), claseId)) {
+                    redirectAttributes.addFlashAttribute("mensaje", "Inscripción a la clase exitosa!");
+                } else {
+                    redirectAttributes.addFlashAttribute("error", "No se pudo inscribir a la clase o ya estás inscrito.");
+                }
+            } catch (Exception e) {
+                redirectAttributes.addFlashAttribute("error", "Error al inscribir a la clase: " + e.getMessage());
+            }
+            return "redirect:/clases/alumno/mis-clases";
+        }
+
+        @PostMapping("/alumno/desinscribir")
+        @PreAuthorize("hasRole('ALUMNO')") // Solo ALUMNO puede desinscribirse
+        public String desinscribirAlumnoDeClase(@RequestParam Long claseId, RedirectAttributes redirectAttributes, Authentication authentication) {
+            String userEmail = authentication.getName();
+            Usuario alumnoActual = usuarioService.getUsuarioByEmail(userEmail)
+                                                 .orElseThrow(() -> new RuntimeException("Usuario autenticado no encontrado"));
+            try {
+                if (usuarioService.desinscribirUsuarioDeClase(alumnoActual.getId(), claseId)) {
+                    redirectAttributes.addFlashAttribute("mensaje", "Desinscripción de la clase exitosa!");
+                } else {
+                    redirectAttributes.addFlashAttribute("error", "No se pudo desinscribir de la clase o no estás inscrito.");
+                }
+            } catch (Exception e) {
+                redirectAttributes.addFlashAttribute("error", "Error al desinscribir de la clase: " + e.getMessage());
+            }
+            return "redirect:/clases/alumno/mis-clases";
+        }
+    }
+    */
+
+    // src/main/java/com/rollerspeed/rollerspeed/Controller/PagoController.java
+    /*
+    package com.rollerspeed.rollerspeed.Controller;
+
+    // ... imports ...
+    import org.springframework.security.access.prepost.PreAuthorize;
+
+    @Controller
+    @RequestMapping("/pagos")
+    public class PagoController {
+        // ... autowired services ...
+
+        @GetMapping("/nuevo")
+        @PreAuthorize("hasRole('ADMIN')") // Solo ADMIN puede acceder al formulario de nuevo pago
+        public String mostrarFormularioPago(Model model) {
+            model.addAttribute("pago", new Pago());
+            model.addAttribute("alumnos", usuarioService.getUsuariosByRol(RolUsuario.ALUMNO));
+            model.addAttribute("clases", claseService.getAllClases());
+            return "pagos/pagoForm";
+        }
+
+        @PostMapping("/guardar")
+        @PreAuthorize("hasRole('ADMIN')") // Solo ADMIN puede guardar pagos
+        public String guardarPago(@ModelAttribute Pago pago, RedirectAttributes redirectAttributes) {
+            // ... lógica de guardado ...
+            return "redirect:/pagos/listar";
+        }
+
+        @GetMapping("/listar")
+        @PreAuthorize("hasAnyRole('ADMIN', 'PROFESOR')") // ADMIN y PROFESOR pueden listar pagos
+        public String listarPagos(Model model) {
+            model.addAttribute("pagos", pagoService.getAllPagos());
+            return "pagos/listarPagos";
+        }
+
+        @GetMapping("/detalles/{id}")
+        @PreAuthorize("hasAnyRole('ADMIN', 'PROFESOR')") // ADMIN y PROFESOR pueden ver detalles de pagos
+        public String detallesPago(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes) {
+            // ... lógica para buscar y mostrar detalles ...
+            return "pagos/detallesPago";
+        }
+
+        @PostMapping("/eliminar/{id}")
+        @PreAuthorize("hasRole('ADMIN')") // Solo ADMIN puede eliminar pagos
+        public String eliminarPago(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+            // ... lógica de eliminación ...
+            return "redirect:/pagos/listar";
+        }
+    }
+    */
+
+    // src/main/java/com/rollerspeed/rollerspeed/Controller/ReporteController.java
+    /*
+    package com.rollerspeed.rollerspeed.Controller;
+
+    // ... imports ...
+    import org.springframework.security.access.prepost.PreAuthorize;
+    import org.springframework.security.core.Authentication;
+
+    @Controller
+    @RequestMapping("/reportes")
+    public class ReporteController {
+        // ... autowired services ...
+
+        @GetMapping("/asistencia/alumno")
+        @PreAuthorize("hasAnyRole('ADMIN', 'PROFESOR')") // ADMIN y PROFESOR pueden ver reportes por alumno (quizás PROFESOR solo para sus alumnos)
+        public String mostrarFormularioReporteAsistenciaAlumno(Model model) {
+            model.addAttribute("alumnos", usuarioService.getUsuariosByRol(RolUsuario.ALUMNO));
+            return "reportes/reporteAsistenciaAlumno";
+        }
+
+        @GetMapping("/asistencia/alumno/{alumnoId}")
+        @PreAuthorize("hasAnyRole('ADMIN', 'PROFESOR')")
+        public String generarReporteAsistenciaAlumno(@PathVariable Long alumnoId,
+                                                    @RequestParam(value = "fechaInicio", required = false) String fechaInicioStr,
+                                                    @RequestParam(value = "fechaFin", required = false) String fechaFinStr,
+                                                    Model model, RedirectAttributes redirectAttributes, Authentication authentication) {
+            // Lógica para el profesor: solo puede ver reportes de sus alumnos. Esto requeriría una relación
+            // directa o indirecta entre el profesor y el alumno (ej. alumno inscrito en una de sus clases).
+            // Para simplificar aquí, solo se revisa el rol general.
+
+            // ... Lógica para buscar asistencias y añadir al modelo ...
+            model.addAttribute("rolActual", authentication.getAuthorities().iterator().next().getAuthority().replace("ROLE_", ""));
+            return "reportes/reporteAsistenciaAlumno";
+        }
+
+        @GetMapping("/asistencia/clase")
+        @PreAuthorize("hasAnyRole('ADMIN', 'PROFESOR')") // ADMIN y PROFESOR pueden ver reportes por clase
+        public String mostrarFormularioReporteAsistenciaClase(Model model, Authentication authentication) {
+            // Si es PROFESOR, solo mostrar sus clases
+            if (authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_PROFESOR"))) {
+                Usuario profesorActual = usuarioService.getUsuarioByEmail(authentication.getName())
+                                                      .orElseThrow(() -> new RuntimeException("Profesor autenticado no encontrado"));
+                model.addAttribute("clases", claseService.findClasesByProfesor(profesorActual));
+            } else { // ADMIN
+                model.addAttribute("clases", claseService.getAllClases());
+            }
+            return "reportes/reporteAsistenciaClase";
+        }
+
+        @GetMapping("/asistencia/clase/{claseId}")
+        @PreAuthorize("hasAnyRole('ADMIN', 'PROFESOR')")
+        public String generarReporteAsistenciaClase(@PathVariable Long claseId, Model model,
+                                                    RedirectAttributes redirectAttributes,
+                                                    Authentication authentication) {
+            // Lógica de autorización más fina para el profesor
+            // Si es PROFESOR, verificar que la clase le pertenezca.
+            if (authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_PROFESOR"))) {
+                Usuario profesorActual = usuarioService.getUsuarioByEmail(authentication.getName())
+                                                      .orElseThrow(() -> new RuntimeException("Profesor autenticado no encontrado"));
+                Clase clase = claseService.getClaseById(claseId)
+                                         .orElseThrow(() -> new org.springframework.security.access.AccessDeniedException("Clase no encontrada o no tienes permiso para acceder."));
+                if (!clase.getProfesor().getId().equals(profesorActual.getId())) {
+                    throw new org.springframework.security.access.AccessDeniedException("No tienes permiso para ver el reporte de esta clase.");
+                }
+            }
+
+            // ... Lógica para buscar asistencias y añadir al modelo ...
+            model.addAttribute("rolActual", authentication.getAuthorities().iterator().next().getAuthority().replace("ROLE_", ""));
+            return "reportes/reporteAsistenciaClase";
+        }
+    }
+    */
+
+    // src/main/java/com/rollerspeed/rollerspeed/Controller/userController.java
+    /*
+    package com.rollerspeed.rollerspeed.Controller;
+
+    // ... imports ...
+    import org.springframework.security.access.prepost.PreAuthorize;
+    import org.springframework.security.core.Authentication; // Necesario para obtener el usuario actual
+
+    @Controller
+    @RequestMapping("/users")
+    public class userController {
+        // ... autowired services ...
+
+        // Este método ahora se accede directamente desde /users/registrar-alumno y no requiere autenticación
+        @GetMapping("/registrar-alumno")
+        public String mostrarFormularioRegistroAlumno(Model model) {
+            model.addAttribute("usuario", new Usuario());
+            model.addAttribute("generos", GeneroUsuario.values());
+            model.addAttribute("mediosPago", MedioPago.values());
+            // El rol ALUMNO se asignará por defecto en el servicio o al crear el usuario
+            return "users/usuarioForm"; // Reutiliza el formulario de usuario, pero con validaciones específicas si es necesario
+        }
+
+        @PostMapping("/registrar-alumno")
+        public String registrarAlumno(@ModelAttribute Usuario usuario, RedirectAttributes redirectAttributes) {
+            // Asigna el rol ALUMNO por defecto si este método es solo para registro de alumnos
+            usuario.setRol(RolUsuario.ALUMNO);
+            try {
+                // El servicio UsuarioService debe encriptar la contraseña antes de guardar
+                userService.guardaUsuario(usuario);
+                redirectAttributes.addFlashAttribute("mensaje", "Registro exitoso. Ya puedes iniciar sesión.");
+                return "redirect:/login";
+            } catch (Exception e) {
+                redirectAttributes.addFlashAttribute("error", "Error al registrar el alumno: " + e.getMessage());
+                return "redirect:/users/registrar-alumno";
+            }
+        }
+
+        // Métodos de gestión de usuarios (CRUD) que solo ADMIN puede usar
+        @GetMapping("/nuevo")
+        @PreAuthorize("hasRole('ADMIN')") // Solo ADMIN puede acceder a este formulario
+        public String mostrarFormularioNuevoUsuarioAdmin(Model model) {
+            model.addAttribute("usuario", new Usuario());
+            model.addAttribute("roles", RolUsuario.values());
+            model.addAttribute("generos", GeneroUsuario.values());
+            model.addAttribute("mediosPago", MedioPago.values());
+            return "users/usuarioForm";
+        }
+
+        @PostMapping("/guardar")
+        @PreAuthorize("hasRole('ADMIN')") // Solo ADMIN puede guardar usuarios
+        public String guardarUsuarioAdmin(@ModelAttribute Usuario usuario, RedirectAttributes redirectAttributes) {
+            try {
+                userService.guardaUsuario(usuario); // El servicio encripta la contraseña
+                redirectAttributes.addFlashAttribute("mensaje", "Usuario guardado con éxito!");
+                return "redirect:/users/listar";
+            } catch (Exception e) {
+                redirectAttributes.addFlashAttribute("error", "Error al guardar el usuario: " + e.getMessage());
+                return "redirect:/users/nuevo"; // O redirigir al formulario de edición si es una actualización
+            }
+        }
+
+        @GetMapping("/listar")
+        @PreAuthorize("hasRole('ADMIN')") // Solo ADMIN puede listar usuarios
+        public String listarUsuarios(Model model) {
+            model.addAttribute("usuarios", userService.getUsuarios());
+            return "users/listarUsuarios";
+        }
+
+        @GetMapping("/editar/{id}")
+        @PreAuthorize("hasRole('ADMIN')") // Solo ADMIN puede editar usuarios
+        public String mostrarFormularioEditarUsuarioAdmin(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes) {
+            Optional<Usuario> usuarioOptional = userService.getUsuarioById(id);
+            if (usuarioOptional.isPresent()) {
+                model.addAttribute("usuario", usuarioOptional.get());
+                model.addAttribute("roles", RolUsuario.values());
+                model.addAttribute("generos", GeneroUsuario.values());
+                model.addAttribute("mediosPago", MedioPago.values());
+                return "users/usuarioForm";
+            } else {
+                redirectAttributes.addFlashAttribute("error", "Usuario no encontrado.");
+                return "redirect:/users/listar";
+            }
+        }
+
+        @PostMapping("/eliminar/{id}")
+        @PreAuthorize("hasRole('ADMIN')") // Solo ADMIN puede eliminar usuarios
+        public String eliminarUsuario(@PathVariable Long id, RedirectAttributes redirectAttributes, Authentication authentication) {
+            String userEmail = authentication.getName();
+            Usuario usuarioAutenticado = userService.getUsuarioByEmail(userEmail)
+                                                    .orElseThrow(() -> new RuntimeException("Usuario autenticado no encontrado"));
+
+            if (usuarioAutenticado.getId().equals(id)) {
+                redirectAttributes.addFlashAttribute("error", "No puedes eliminar tu propia cuenta.");
+                return "redirect:/users/listar";
+            }
+
+            try {
+                userService.deleteUsuario(id);
+                redirectAttributes.addFlashAttribute("mensaje", "Usuario eliminado con éxito!");
+            } catch (Exception e) {
+                redirectAttributes.addFlashAttribute("error", "Error al eliminar el usuario: " + e.getMessage());
+            }
+            return "redirect:/users/listar";
+        }
+
+        // Perfil del usuario autenticado (cualquier rol)
+        @GetMapping("/perfil")
+        @PreAuthorize("isAuthenticated()") // Cualquier usuario autenticado puede ver su perfil
+        public String verPerfil(Model model, Authentication authentication) {
+            String userEmail = authentication.getName(); // Obtiene el email del usuario logueado
+            Usuario usuarioAutenticado = userService.getUsuarioByEmail(userEmail)
+                                                    .orElseThrow(() -> new RuntimeException("Usuario autenticado no encontrado."));
+
+            model.addAttribute("usuario", usuarioAutenticado);
+            model.addAttribute("rolActual", usuarioAutenticado.getRol().name()); // Añade el rol para la vista
+            return "users/perfilUsuario";
+        }
+    }
+    */
+
+    // --- 8. VISTAS HTML (Thymeleaf) ---
+    // Utiliza `sec:authorize` y `sec:authentication` para control de UI y mostrar/ocultar elementos.
+    // Añade la declaración de namespace de Spring Security en el `<html>` tag.
+    // `<html lang="es" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">`
+
+    // login.html (ya estás usando `param.error` y `param.logout`, lo cual es correcto)
+    /*
+    <html lang="es" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+    <head>
+        ...
+    </head>
+    <body>
+        <div class="login-container">
+            ...
+            <div th:if="${param.logout}" class="alert alert-info">
+                Has cerrado sesión exitosamente.
+            </div>
+            <div th:if="${param.error}" class="alert alert-danger">
+                Credenciales inválidas. Por favor, inténtalo de nuevo.
+            </div>
+            <form th:action="@{/login}" method="post">
+                <input type="email" id="email" name="username" class="form-control" required autofocus>
+                <input type="password" id="password" name="password" class="form-control" required>
+                <button type="submit" class="btn btn-primary btn-block">Entrar</button>
+            </form>
+            ...
+        </div>
+    </body>
+    </html>
+    */
+    // NOTA IMPORTANTE: En el formulario de login, el campo de correo electrónico debe tener `name="username"`
+    // y la contraseña `name="password"` por defecto para que Spring Security los reconozca.
+
+    // Navegación (ej. en un fragmento o en cada HTML)
+    /*
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/">Roller Speed</a>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/publicIndex}">Inicio</a>
+                    </li>
+                    <li class="nav-item" sec:authorize="!isAuthenticated()">
+                        <a class="nav-link" th:href="@{/login}">Iniciar Sesión</a>
+                    </li>
+                    <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+                        <a class="nav-link" th:href="@{/admin/dashboard}">Admin Dashboard</a>
+                    </li>
+                    <li class="nav-item" sec:authorize="hasRole('PROFESOR')">
+                        <a class="nav-link" th:href="@{/profesor/dashboard}">Profesor Dashboard</a>
+                    </li>
+                    <li class="nav-item" sec:authorize="hasRole('ALUMNO')">
+                        <a class="nav-link" th:href="@{/alumno/dashboard}">Alumno Dashboard</a>
+                    </li>
+                    <li class="nav-item" sec:authorize="isAuthenticated()">
+                        <a class="nav-link" th:href="@{/users/perfil}">Mi Perfil</a>
+                    </li>
+                    <li class="nav-item" sec:authorize="isAuthenticated()">
+                        <form th:action="@{/logout}" method="post" style="display: inline;">
+                            <button type="submit" class="btn btn-link nav-link" style="color: white;">Cerrar Sesión</button>
+                        </form>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    */
+
+    // Mostrar nombre de usuario y rol en el dashboard
+    /*
+    <p sec:authorize="isAuthenticated()">Bienvenido, <span sec:authentication="name"></span>!</p>
+    <p sec:authorize="hasRole('ADMIN')">Tu rol: Administrador</p>
+    <p sec:authorize="hasRole('PROFESOR')">Tu rol: Profesor</p>
+    <p sec:authorize="hasRole('ALUMNO')">Tu rol: Alumno</p>
+    */
+
+    // --- 9. Manejo de Errores (accessDenied.html) ---
+    // Tu página accessDenied.html se mostrará automáticamente cuando haya un AccessDeniedException.
+    // Solo asegúrate de que sea una vista de Thymeleaf normal.
+
+    // src/main/resources/templates/accessDenied.html
+    /*
+    <!DOCTYPE html>
+    <html lang="es" xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta charset="UTF-8">
+        <title>Acceso Denegado</title>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+        <style>
+            body { display: flex; justify-content: center; align-items: center; min-height: 100vh; background-color: #f8d7da; color: #721c24; }
+            .error-container { text-align: center; background-color: #fce8e8; padding: 30px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+            h1 { font-size: 2.5rem; color: #dc3545; }
+            p { font-size: 1.2rem; }
+        </style>
+    </head>
+    <body>
+        <div class="error-container">
+            <h1>Acceso Denegado</h1>
+            <p th:text="${errorMessage ?: 'No tienes permiso para acceder a esta página.'}"></p>
+            <a th:href="@{/}" class="btn btn-primary">Volver al Inicio</a>
+            <a th:href="@{/logout}" class="btn btn-secondary">Cerrar Sesión</a>
+        </div>
+    </body>
+    </html>
+    */
+
+    // --- CONSEJOS ADICIONALES ---
+    // 1. **Contraseñas**: SIEMPRE encripta las contraseñas antes de guardarlas en la base de datos.
+    //    Nunca almacenes contraseñas en texto plano.
+    // 2. **Roles**: Asegúrate de que los roles en tu `RolUsuario` enum coincidan con los usados en
+    //    `hasRole('ROLE_...')` en Spring Security. Spring Security añade automáticamente el prefijo `ROLE_`.
+    // 3. **Testing**: Utiliza `spring-security-test` para escribir pruebas de integración y unitarias
+    //    para tus controladores y servicios con diferentes roles.
+    // 4. **HTTPS**: En un entorno de producción, asegúrate de que tu aplicación utilice HTTPS para
+    //    proteger las credenciales y la comunicación.
+    // 5. **Manejo de Sesiones**: Spring Security maneja las sesiones por ti. Evita manipular `HttpSession`
+    //    directamente para almacenar información de autenticación, a menos que sea estrictamente necesario
+    //    y sepas lo que haces para no interferir con la seguridad. Usa `Authentication` object para
+    //    acceder a los detalles del usuario autenticado.
+    // 6. **Errores de Redirección**: Si tienes problemas de redirección, verifica las rutas en
+    //    `SecurityConfig` (`loginPage`, `successHandler`, `failureUrl`, `accessDeniedPage`).
+
+}
