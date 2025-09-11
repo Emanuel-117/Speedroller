@@ -11,5 +11,4 @@ public class clienteController {
     public String cliente() {
         return "cliente";
     }
-    
 }
