@@ -2,102 +2,23 @@
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard Alumno</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body { padding-top: 20px; background-color: #f8f9fa; }
-        .container { background-color: #ffffff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin-bottom: 30px;}
-        h1 { color: #17a2b8; margin-bottom: 25px; } /* Color para alumnos */
-        .card-dashboard { height: 180px; display: flex; flex-direction: column; justify-content: space-between; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); transition: transform 0.2s; }
-        .card-dashboard:hover { transform: translateY(-5-px); }
-        .card-dashboard .card-header { background-color: transparent; border-bottom: none; padding-bottom: 0; color: white; font-weight: bold; }
-        .card-dashboard .card-body { color: white; padding-top: 5px; }
-        .bg-primary-light { background-color: #6610f2; } /* Un morado */
-        .bg-danger-light { background-color: #dc3545; } /* Rojo */
-        .bg-success-light { background-color: #20c997; } /* Un verde azulado */
-        .logout-link { position: absolute; top: 20px; right: 20px; }
+        body { background-color: #f0f2f5; }
     </style>
 </head>
 <body>
-    <div class="logout-link">
-        <span class="me-3">Bienvenido, <strong th:text="${session.userRol}"></strong>!</span>
-        <a th:href="@{/logout}" class="btn btn-danger btn-sm">Cerrar Sesión</a>
-    </div>
-
-    <div class="container">
-        <h1>Mi Dashboard de Alumno</h1>
-        <p class="lead">Bienvenido, [[${session.userName}]]! Aquí puedes ver tus clases, pagos y asistencia.</p>
-
-        <div th:if="${mensaje}" class="alert alert-success alert-dismissible fade show" role="alert">
-            <span th:text="${mensaje}"></span>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
-            <span th:text="${error}"></span>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-
-        <div class="row mt-4">
-            <div class="col-md-4 mb-4">
-                <div class="card card-dashboard bg-primary-light">
-                    <div class="card-header">
-                        <i class="bi bi-easel-fill me-2"></i> Mis Clases Inscritas
-                    </div>
-                    <div class="card-body">
-                        <h5 class="card-title">Ver mis Clases</h5>
-                        <p class="card-text">Clase próxima: Patinaje Básico</p>
-                        <a th:href="@{/users/alumno/mis-clases}" class="stretched-link"></a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4 mb-4">
-                <div class="card card-dashboard bg-danger-light">
-                    <div class="card-header">
-                        <i class="bi bi-credit-card-fill me-2"></i> Estado de Pagos
-                    </div>
-                    <div class="card-body">
-                        <h5 class="card-title">Pagos Pendientes: [[${pagosPendientesAlumno}]]</h5>
-                        <p class="card-text">Fecha límite: 30/06/2025</p>
-                        <a th:href="@{/pagos/mi-estado}" class="stretched-link"></a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4 mb-4">
-                <div class="card card-dashboard bg-success-light">
-                    <div class="card-header">
-                        <i class="bi bi-calendar-check-fill me-2"></i> Historial de Asistencia
-                    </div>
-                    <div class="card-body">
-                        <h5 class="card-title">Asistencia %: [[${porcentajeAsistencia}]]%</h5>
-                        <p class="card-text">Clases asistidas: [[${clasesAsistidas}]]</p>
-                        <a th:href="@{/reportes/asistencia/alumno/{alumnoId}(alumnoId=${session.userId})}" class="stretched-link"></a>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <h3 class="mt-5">Acciones Rápidas</h3>
+    <div th:replace="~{fragments/header :: header}"></div>
+    <div class="container mt-5">
+        <h1 class="mb-4">Dashboard de Alumno</h1>
+        <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+        <div th:if="${mensaje}" class="alert alert-success" th:text="${mensaje}"></div>
         <div class="list-group">
-            <a th:href="@{/users/mi-perfil}" class="list-group-item list-group-item-action">
-                <i class="bi bi-person-circle me-2"></i> Editar Mi Perfil
-            </a>
-            <a th:href="@{/clases/calendarioSimple}" class="list-group-item list-group-item-action">
-                <i class="bi bi-calendar-fill me-2"></i> Ver Calendario de Clases
-            </a>
-            <a th:href="@{/pagos/registrar}" class="list-group-item list-group-item-action">
-                <i class="bi bi-cash-stack me-2"></i> Realizar un Pago
-            </a>
-            <a th:href="@{/reportes/asistencia/alumno/{alumnoId}(alumnoId=${session.userId})}" class="list-group-item list-group-item-action">
-                <i class="bi bi-journal-text me-2"></i> Ver Mi Reporte Detallado de Asistencia
-            </a>
-            <a th:href="@{/users/alumno/mis-clases}" class="list-group-item list-group-item-action">
-                <i class="bi bi-easel-fill me-2"></i> Gestionar Mis Clases Inscritas
-            </a>
+            <a href="/users/mi-perfil" class="list-group-item list-group-item-action">Mi Perfil</a>
+            <a href="/users/alumno/mis-clases" class="list-group-item list-group-item-action">Mis Clases Inscritas</a>
         </div>
     </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

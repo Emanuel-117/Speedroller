@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+
+<!-- Fragmento del encabezado -->
+<div th:fragment="header" class="mb-4">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">Rollerspeed</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <!-- Enlaces para el rol ADMIN -->
+                    <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+                        <a class="nav-link" th:href="@{/dashboard/admin}">Dashboard Admin</a>
+                    </li>
+                    <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+                        <a class="nav-link" th:href="@{/users/listarUsuarios}">Gestión de Usuarios</a>
+                    </li>
+                    <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+                        <a class="nav-link" th:href="@{/clases/listarClases}">Gestión de Clases</a>
+                    </li>
+                    <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+                        <a class="nav-link" th:href="@{/pagos/listarPagos}">Gestión de Pagos</a>
+                    </li>
+                    <li class="nav-item" sec:authorize="hasRole('ADMIN') or hasRole('PROFESOR')">
+                        <a class="nav-link" th:href="@{/reportes/asistencia/clase}">Reportes</a>
+                    </li>
+                    
+                    <!-- Enlaces para el rol PROFESOR -->
+                    <li class="nav-item" sec:authorize="hasRole('PROFESOR')">
+                        <a class="nav-link" href="/dashboard/profesor">Dashboard Profesor</a>
+                    </li>
+                    <li class="nav-item" sec:authorize="hasRole('PROFESOR')">
+                        <a class="nav-link" href="/clases/profesor/listar">Mis Clases</a>
+                    </li>
+
+                    <!-- Enlaces para el rol ALUMNO -->
+                    <li class="nav-item" sec:authorize="hasRole('ALUMNO')">
+                        <a class="nav-link" th:href="@{/dashboard/alumno}">Dashboard Alumno</a>
+                    </li>
+                    <li class="nav-item" sec:authorize="hasRole('ALUMNO')">
+                        <a class="nav-link" th:href="@{/users/miPerfil}">Mi Perfil</a>
+                    </li>
+                    
+                    <!-- Enlace de logout para usuarios autenticados -->
+                    <li class="nav-item" sec:authorize="isAuthenticated()">
+                        <form th:action="@{/logout}" method="post" class="d-inline">
+                            <button type="submit" class="nav-link btn btn-link">Cerrar Sesión</button>
+                        </form>
+                    </li>
+                    </li>
+                    <li class="nav-item" sec:authorize="hasRole('ALUMNO')">
+                        <a class="nav-link" href="/users/alumno/mis-clases">Mis Clases Inscritas</a>
+                    </li>
+                </ul>
+                
+                <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                    <li class="nav-item" sec:authorize="isAuthenticated()">
+                        <a class="nav-link" th:href="@{/logout}">Cerrar Sesión</a>
+                    </li>
+                    <li class="nav-item" sec:authorize="!isAuthenticated()">
+                        <a class="nav-link" th:href="@{/login}">Iniciar Sesión</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+</div>
+</body>
+</html>

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="'Alumnos Inscritos en ' + ${clase.nombre}"></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f0f2f5; }
+        .table-custom { border-radius: 10px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body>
+    <div th:replace="~{fragments/header :: header}"></div>
+    
+    <div class="container mt-5">
+        <h2 class="mb-4" th:text="'Alumnos Inscritos en ' + ${clase.nombre}"></h2>
+        <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+        <div th:if="${mensaje}" class="alert alert-success" th:text="${mensaje}"></div>
+        
+        <div class="table-responsive">
+            <table class="table table-striped table-hover table-custom">
+                <thead class="table-dark">
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">Nombre</th>
+                        <th scope="col">Email</th>
+                        <th scope="col">Teléfono</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="alumno : ${clase.alumnos}">
+                        <td th:text="${alumno.id}"></td>
+                        <td th:text="${alumno.nombre + ' ' + alumno.apellido}"></td>
+                        <td th:text="${alumno.email}"></td>
+                        <td th:text="${alumno.telefono}"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <a th:href="@{/clases/admin/listar}" class="btn btn-secondary mt-3">Volver a Clases</a>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
