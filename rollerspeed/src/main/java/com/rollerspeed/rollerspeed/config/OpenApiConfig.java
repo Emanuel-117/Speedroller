@@ -14,13 +14,10 @@ import java.util.List;
 @Configuration
 public class OpenApiConfig {
 
-    @Value("${rollerspeed.openapi.dev-url}")
-    private String devUrl;
-
     @Bean
     public OpenAPI myOpenAPI() {
         Server devServer = new Server();
-        devServer.setUrl(devUrl);
+        devServer.setUrl("https://localhost:8443");
         devServer.setDescription("URL del servidor de desarrollo");
 
         Contact contact = new Contact();

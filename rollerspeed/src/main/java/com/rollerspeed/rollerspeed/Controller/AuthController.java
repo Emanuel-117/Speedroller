@@ -22,7 +22,7 @@ public class AuthController {
         if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal())) {
             return "redirect:/dashboard/redirect";
         }
-        return "publicIndex";
+        return "index";
     }
 
     @GetMapping("/dashboard/redirect")
